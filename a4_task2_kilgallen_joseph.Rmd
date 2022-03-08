@@ -1,0 +1,79 @@
+---
+title: "Willamette Falls fish passage time series summary"
+author: "Joseph Kilgallen"
+date: "3/8/2022"
+output: 
+  html_document:
+    theme: spacelab
+    highlight: tango
+    code_folding: hide
+---
+
+**Your .Rmd must be customized as follows:**
+
+-With a non-default theme (for example using bootstrap themes, with a custom theme, or with a theme from another package)
+
+- With a separate tab for each of the three sections below the Overview (see this section on tabs in RMarkdown: The Definitive Guide by Yihui Xie, J. J. Allaire, and Garrett Grolemund)
+
+- The document should be cohesive in presentation and communication (e.g. all graphs should use the same theming, consistent color schemes, etc.)
+
+```{r setup, class.source = 'fold-show', include= TRUE, warning = FALSE, message= FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(prettydoc)
+library(tidyverse)
+library(here)
+library(broom)
+library(sf)
+library(tmap)
+library(gstat)
+library(stars)
+```
+
+## Overview {.tabset .tabset-pills}
+
+**An engaging image**
+(with caption, incl. photo credit) that is relevant to the dataset
+
+**Report Summary** 
+A brief summary (3 - 4 sentences) of the dataset, and what is included in this report
+
+**A map of the fish ladder location**
+(you can make this in R on your own, or include an existing map appropriately licensed, with attribution)
+
+**Data Citation**
+A professionally formatted data citation
+
+```{r}
+## reading in the data and cleaning up
+will <- read_csv(here::here("data", "willamette.csv")) %>% 
+  janitor::clean_names()
+```
+
+### Original time series data
+A finalized, static graph of adult passage for coho, jack coho, and steelhead salmon (you decide if these all occupy the same panel, or if they are in separate panels). Add a figure caption. Replace NA values with zero. 
+```{r}
+## subset the data for this chart
+
+## want data just for coho, jack coho and salmon
+will_static <- will %>% 
+  select(c("coho", "jack_coho", "steelhead", "date")) %>% 
+  mutate()
+  
+```
+
+
+**Takeaways**
+2 - 3 bullet points summarizing major patterns / notable trends in the salmon passage time series data
+
+
+### Seasonplots
+Tab 2: 
+A finalized seasonplot for each species (coho, jack coho, steelhead) in its own panel. You can either facet_wrap/facet_grid, or use patchwork or cowplot, to make the figure. Add a caption.
+Add 2 - 3 bullet points summarizing the major trends you see in the seasonplots.
+
+
+### Annual counts by species
+A finalized figure of annual totals for fish passage, for each of the 3 species (coho, jack coho, steelhead). 
+
+You decide if this is in a single panel, or multiple panels. Add a figure caption. 
+Add 2 - 3 bullet points summarizing major trends you see in the annual totals by species from 2000 - 2010.

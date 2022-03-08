@@ -1,0 +1,133 @@
+---
+title: "task 1 assignment 4"
+author: "Joseph Kilgallen"
+date: "3/8/2022"
+output: 
+  html_document:
+    code_folding: hide
+---
+
+```{r setup, class.source = 'fold-show', include= TRUE, warning = FALSE, message= FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(tidyverse)
+library(here)
+library(broom)
+library(sf)
+library(tmap)
+library(gstat)
+library(stars)
+```
+
+## Overview
+**Report Summary** REWRITE
+The database system is designed to provide OSPR with quantified statistical data on oil spill response by OSPR field responders. The OSPR Incident Tracking Database System project was initiated to provide OSPR with oil spill incident data for statistical evaluation and justification for program planning, drills and exercise training and development, legislative analysis, budget preparation, to inform and educate the public and analyze OSPR's overall spill preparedness and response performance. An "incident", for purposes of this database, is "a discharge or threatened discharge of petroleum or other deleterious material into the waters of the state."
+
+**Data Citation** REFORMAT
+Title Oil Spill Incident Tracking [ds394]
+Publication date 2009-07-23
+Edition 2008
+Presentation formats digital map
+FGDC geospatial presentation format vector digital data
+
+### Exploratory Interactive Map of Oil Spill Events in California
+Here we make an exploratory interactive map in tmap showing the location of oil spill events included in the data. This map allows viewers to zoom in, explore different areas, etc. Let's make one for our California counties (fill aesthetic by land area) with the red sesbania locations on top:
+
+```{r}
+## reading in the data First, let's read in the California county shapefile:
+ca_counties_sf <- read_sf(here("data", "ca_counties", "CA_Counties_TIGER2016.shp"))
+
+## subset and clean up
+ca_subset_sf <- ca_counties_sf %>% 
+  janitor::clean_names() %>%
+  select(county_name = name, land_area = aland)
+
+#head(ca_subset_sf) 
+
+## checking CRS
+#ca_subset_sf %>% st_crs()
+## epsg 3857
+
+## looking at it
+plot1 <- ggplot(data = ca_subset_sf) +
+  geom_sf(aes(fill = land_area), color = "white", size = 0.1) +
+  theme_void() +
+  scale_fill_gradientn(colors = c("cyan","blue","purple"))
+
+## reading in the Oil Spill Incident data
+oil_sf <- read_sf(here("data","ds394","ds394.shp")) %>%
+  janitor::clean_names()
+
+# Check the CRS:
+#oil_sf %>% st_crs()
+#epsg 3310
+
+# Notice that this CRS is different from the California counties CRS, so we'll want to update it to match. Use `st_transform()` to update the CRS:
+### if you don't know the EPSG code:
+oil_sf_3857 <- st_transform(oil_sf, st_crs(ca_counties_sf))
+
+# Then check it: 
+#oil_sf_3857  %>% st_crs()
+
+#Cool, now they have the same CRS. 
+
+## plotting the two together
+plot2 <- ggplot() +
+  geom_sf(data = ca_subset_sf) +
+  geom_sf(data = oil_sf_3857, size = 1, color = "red")
+
+### Now that all set up is done lets make the interactive map
+# Set the viewing mode to "interactive":
+tmap_mode(mode = "view")
+
+# Then make a map (with the polygon fill color updated by variable 'land_area', updating the color palette to "BuGn"), then add another shape layer for the oil spill records (added as dots):
+tm_shape(ca_subset_sf) +
+  tm_fill("land_area", palette = "Blues") +
+  tm_shape(oil_sf) +
+  tm_dots()
+```
+See *all* kinds of other cool ways you can update your interactive tmaps. 
+- [`tmap` vignettes](https://cran.r-project.org/web/packages/tmap/vignettes/tmap-getstarted.html)
+- [Chapter 8 in Robin Lovelace's "Geocomputation in R"](https://geocompr.robinlovelace.net/adv-map.html#interactive-maps)
+
+### Finalized static choropleth map 
+in ggplot in which the fill color for each county depends on the count of inland oil spill events by county for the 2008 oil spill data
+
+
+```{r}
+#To find the count of oil spills observed locations in this dataset *by county*. need to use`st_join()` to combine the two spatial datasets
+ca_oil_sf <- ca_subset_sf %>% 
+  st_join(oil_sf_3857)
+
+#head(oil_sf_3857)
+
+#head(ca_oil_sf)
+## Great that worked!
+
+# Now want to find the counts by record in the dataset by county.  
+## We can't just count the rows (e.g., using count()) because some rows are counties with no records (and sesbania information is all NAs)
+
+oil_counts_sf <- ca_oil_sf %>% 
+  group_by(county_name) %>%
+  summarize(n_records = sum(!is.na(oesnumber)))
+
+#head(oil_counts_sf)
+
+
+### Then we can plot a choropleth using the number of records for oil spills as the fill color 
+ggplot(data = oil_counts_sf) +
+  geom_sf(aes(fill = n_records), color = "white", size = 0.1) +
+  scale_fill_gradientn(colors = c("lightgray","orange","red")) +
+  theme_minimal() +
+  labs(fill = "Number of Oil Spills recorded", title = "California Oil Spills By County in 2008")
+```
+**Takeaways** 
+
+- Highest concentration of oil spills occurs in counties in Southern California, particularly Los Angeles county.
+
+- Oil spills appear to be largely concentrated along the coastline, which makes sense as this area (especially within LA county) has the greatest concentration of people and coastal oil rigs.
+
+- Future research should focus on understanding why oil spills are so frequent in Southern California and how practices can be improved to minimize these incidents.
+
+### OPTIONAL Challenge: Point Pattern Analysis
+perform a point pattern analysis to assess whether oil spills tend to be more clustered or more uniform than complete spatial randomness. Plot the G function (here, units are in degrees lat-long, use that to help decide on the r) and include a brief interpretation of the results.
+
