@@ -1,13 +1,15 @@
 ---
-title: "task 1 assignment 4"
+title: "ADD NAME"
 author: "Joseph Kilgallen"
 date: "3/8/2022"
 output: 
   html_document:
+    theme: darkly
+    highlight: tango
     code_folding: hide
 ---
 
-```{r setup, class.source = 'fold-show', include= TRUE, warning = FALSE, message= FALSE}
+```{r setup, include= TRUE, warning = FALSE, message= FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(tidyverse)
 library(here)
