@@ -1,5 +1,5 @@
 ---
-title: 'Text Wrangling and Analysis: Text Name HERE'
+title: 'Text Wrangling and Analysis: The Meditations by Marcus Aurelius'
 author: "Joseph Kilgallen"
 date: "3/9/2022"
 output: 
@@ -8,13 +8,21 @@ output:
     highlight: tango
     code_folding: hide
 ---
-# Overview
+# Overview {.tabset .tabset-pills}
 
 ###Summary
-Include an overview section that briefly summarizes the dataset and your analysis.  T
+
+![Marcus Aurelius](data/marcus.jpeg)
+
+This report presents textual vizualizations and sentiment analysis of the famous 'Meditations" by the philosopher king of Rome Marcus Aurelius. The report is split into three sections. In the first section I clean the data, put it into tidy, and remove all material other then the 3 books so that their content can be analyzed. In the second section I present two visualizations of the most common words by book number. Finally, the third section presents a sentiment analysis to determine how the sentiment differs across books using the XXXXXXXXXXXXXXXXX lexicon.
 
 ### Data Citation
+Aurelius, M. (2003). The Meditations: A New Translation. Random House.
 
+
+## Data Cleaning
+
+In this section I convert the pdf text into a dataframe and then use the tidyverse to wrangle the data to prepare it for future analysis. 
 ```{r setup, include= TRUE, warning = FALSE, message= FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(tidyverse)
@@ -26,10 +34,6 @@ library(ggwordcloud)
 ## Reading in the data- Meditations by Marcus Aurelius
 meditations_text <- pdf_text(here::here('data', 'meditations.pdf'))
 ```
-
-## Pt. 1 Wrangle the data to get tokens into tidy format, removing stop words
-
-In this section I convert the pdf text into a dataframe and then use the tidyverse to wrangle the data to prepare it for future analysis. 
 
 ```{r}
 #converting into a data frame,  wrangling with the tidyverse, 
@@ -69,7 +73,7 @@ med_counts <- med_words_clean %>%
 ```
 
 
-# Pt. 2 Find and make a finalized visualization of counts for the most frequently used words in the text (this can be split up by chapter / section for comparison, or for the entire document), for example in a column graph or wordcloud, or both.
+## Word Counts and WordClouds of Books 1-3
 ```{r}
 ## Looking at top 5 words
 top_5_words <- med_counts %>% 
@@ -84,11 +88,23 @@ ggplot(data = top_5_words, aes(x = n, y = word)) +
   facet_wrap(~book, scales = "free")
 
 ## also going to make a wordcloud
+# ch1_top100 <- nonstop_counts %>% 
+#   filter(chapter == 1) %>% 
+#   arrange(-n) %>%  ## tells it to arrange from highest to lowest of n
+#   slice(1:100) # then tells it to just take the top 100 rows
+# 
+# ch1_cloud <- ggplot(data = ch1_top100, aes(label = word)) +
+#   geom_text_wordcloud(aes(color = n, size = n), shape = "diamond") +
+#   scale_size_area(max_size = 6) +
+#   scale_color_gradientn(colors = c("darkgreen","blue","purple")) +
+#   theme_minimal()
+# 
+# ch1_cloud
 ```
 
 
 
-# Pt. 3 Perform sentiment analysis using one of the lexicons introduced in Lab Week 9 (your choice), and present in a final visualization. 
+## Sentiment analysis of 'The Meditations'
 ```{r}
 
 ```
