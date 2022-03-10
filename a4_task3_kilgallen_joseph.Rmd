@@ -1,0 +1,95 @@
+---
+title: 'Text Wrangling and Analysis: Text Name HERE'
+author: "Joseph Kilgallen"
+date: "3/9/2022"
+output: 
+  html_document:
+    theme: darkly
+    highlight: tango
+    code_folding: hide
+---
+# Overview
+
+###Summary
+Include an overview section that briefly summarizes the dataset and your analysis.  T
+
+### Data Citation
+
+```{r setup, include= TRUE, warning = FALSE, message= FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(tidyverse)
+library(tidytext)
+library(textdata)
+library(pdftools)
+library(ggwordcloud)
+
+## Reading in the data- Meditations by Marcus Aurelius
+meditations_text <- pdf_text(here::here('data', 'meditations.pdf'))
+```
+
+## Pt. 1 Wrangle the data to get tokens into tidy format, removing stop words
+
+In this section I convert the pdf text into a dataframe and then use the tidyverse to wrangle the data to prepare it for future analysis. 
+
+```{r}
+#converting into a data frame,  wrangling with the tidyverse, 
+med_lines <- data.frame(meditations_text) %>% ## convert to data frame
+  mutate(page = 1:n()) %>%
+  mutate(text_full = str_split(meditations_text, pattern = '\\n')) %>% 
+  unnest(text_full) %>% 
+  mutate(text_full = str_trim(text_full)) 
+
+
+# Break it up by chapter, and do some analyses. 
+# Adding a new column that contains the Book number (so we can use this as a grouping variable later on).
+# Using `str_detect()` to look for any cells in "text_full" column that contains the string "Book", and if it does, the new column will contain that book number:
+med_books <- med_lines %>% 
+  slice(-(1:1432)) %>% # cutting out all intro stuff to just analyze Marcus Aurelius's portion of the writing
+  mutate(book = ifelse(str_detect(text_full, "Book"), text_full, NA)) %>%  
+  fill(book, .direction = 'down') %>% ## fills the NAs in chapter with the values above
+  separate(col = book, into = c("bo", "no"), sep = " ") %>% # tells it to break apart the book column into two columns as specified and to separate by a space
+  mutate(book = as.numeric(as.roman(no))) 
+## Noticed note section at end still attached want to remove so can just analyze by book
+med_books_clean <- med_books %>% 
+  slice(-(3795:4393))
+# tail(med_books_clean)
+
+
+## Now removing stop words using `tidyr::anti_join()`, which will *omit* any words in `stop_words` from `hobbit_tokens`.
+med_words <- med_books_clean %>% 
+  unnest_tokens(word, text_full) %>% 
+  select(-meditations_text)
+
+med_words_clean <- med_words %>% 
+  anti_join(stop_words, by = 'word') # tells it to remove words from the hobbit_words data frame looking specifically in the word column and filtering out words that match with the stop_words
+
+## can do quick word count by book
+med_counts <- med_words_clean %>% 
+  count(book, word)
+```
+
+
+# Pt. 2 Find and make a finalized visualization of counts for the most frequently used words in the text (this can be split up by chapter / section for comparison, or for the entire document), for example in a column graph or wordcloud, or both.
+```{r}
+## Looking at top 5 words
+top_5_words <- med_counts %>% 
+  group_by(book) %>% 
+  arrange(-n) %>% 
+  slice(1:5) %>%
+  ungroup()
+
+# Graph of most common 5 words from each chapter
+ggplot(data = top_5_words, aes(x = n, y = word)) +
+  geom_col(fill = "blue") +
+  facet_wrap(~book, scales = "free")
+
+## also going to make a wordcloud
+```
+
+
+
+# Pt. 3 Perform sentiment analysis using one of the lexicons introduced in Lab Week 9 (your choice), and present in a final visualization. 
+```{r}
+
+```
+
